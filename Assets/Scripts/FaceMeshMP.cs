@@ -14,6 +14,7 @@ namespace Mediapipe.Unity.Tutorial
         [SerializeField] private int _width;
         [SerializeField] private int _height;
         [SerializeField] private int _fps;
+        [SerializeField] private MultiFaceLandmarkListAnnotationController _multiFaceLandmarksAnnotationController;
 
         private CalculatorGraph _graph;
         private ResourceManager _resourceManager;
@@ -51,10 +52,10 @@ namespace Mediapipe.Unity.Tutorial
 
             _graph = new CalculatorGraph(_configAsset.text);
             var outputVideoStream = new OutputStream<ImageFramePacket, ImageFrame>(_graph, "output_video");
-            // NOTE: StartPolling returns Status
             outputVideoStream.StartPolling().AssertOk();
+            var multiFaceLandmarkStream = new OutputStream<NormalizedLandmarkListVectorPacket, List<NormalizedLandmarkList>>(_graph, "multi_face_landmarks");
+            multiFaceLandmarkStream.StartPolling().AssertOk();
             _graph.StartRun().AssertOk();
-
             stopwatch.Start();
 
             var screenRect = _screen.GetComponent<RectTransform>().rect;
@@ -68,6 +69,16 @@ namespace Mediapipe.Unity.Tutorial
 
                 yield return new WaitForEndOfFrame();
 
+                if (multiFaceLandmarkStream.TryGetNext(out var multiFaceLandmarks))
+                {
+                    _multiFaceLandmarksAnnotationController.DrawNow(multiFaceLandmarks);
+                }
+                else
+                {
+                    _multiFaceLandmarksAnnotationController.DrawNow(null);
+                }
+
+                /*
                 var outputTexture = new Texture2D(_width, _height, TextureFormat.RGBA32, false);
                 var outputPixelData = new Color32[_width * _height];
                 _screen.texture = outputTexture;
@@ -80,9 +91,7 @@ namespace Mediapipe.Unity.Tutorial
                         outputTexture.Apply();
                     }
                 }
-
-                var multiFaceLandmarkStream = new OutputStream<NormalizedLandmarkListVectorPacket, List<NormalizedLandmarkList>>(_graph, "multi_face_landmarks");
-                multiFaceLandmarkStream.StartPolling().AssertOk();
+                
 
                 if (multiFaceLandmarkStream.TryGetNext(out var multiFaceLandmarks))
                 {
@@ -95,6 +104,7 @@ namespace Mediapipe.Unity.Tutorial
                         }
                     }
                 }
+                */
             }
 
         }
