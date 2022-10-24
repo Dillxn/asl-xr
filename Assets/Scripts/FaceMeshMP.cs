@@ -51,10 +51,13 @@ namespace Mediapipe.Unity.Tutorial
             var stopwatch = new Stopwatch();
 
             _graph = new CalculatorGraph(_configAsset.text);
-            var outputVideoStream = new OutputStream<ImageFramePacket, ImageFrame>(_graph, "output_video");
+            var outputVideoStream = new OutputStream<ImageFramePacket, ImageFrame>(_graph, "transformed_input_video");
             outputVideoStream.StartPolling().AssertOk();
-            var multiFaceLandmarkStream = new OutputStream<NormalizedLandmarkListVectorPacket, List<NormalizedLandmarkList>>(_graph, "multi_face_landmarks");
-            multiFaceLandmarkStream.StartPolling().AssertOk();
+            var faceLandmarksStream = new OutputStream<NormalizedLandmarkListPacket, NormalizedLandmarkList>(_graph, "face_landmarks");
+            faceLandmarksStream.StartPolling().AssertOk();
+            var poseLandmarksStream = new OutputStream<NormalizedLandmarkListPacket, NormalizedLandmarkList>(_graph, "pose_landmarks");
+            poseLandmarksStream.StartPolling().AssertOk();
+            
             _graph.StartRun().AssertOk();
             stopwatch.Start();
 
@@ -68,17 +71,21 @@ namespace Mediapipe.Unity.Tutorial
                 _graph.AddPacketToInputStream("input_video", new ImageFramePacket(imageFrame, new Timestamp(currentTimestamp))).AssertOk();
 
                 yield return new WaitForEndOfFrame();
-
-                if (multiFaceLandmarkStream.TryGetNext(out var multiFaceLandmarks))
+                
+                // new
+                if (faceLandmarksStream.TryGetNext(out var faceLandmarks))
                 {
-                    _multiFaceLandmarksAnnotationController.DrawNow(multiFaceLandmarks);
+                    var landmark = faceLandmarks.Landmark[10];
+                    Debug.Log($"1: {landmark.ToString()}");
                 }
-                else
+                
+                if (poseLandmarksStream.TryGetNext(out var poseLandmarks))
                 {
-                    _multiFaceLandmarksAnnotationController.DrawNow(null);
+                    var landmark = poseLandmarks.Landmark[0];
+                    Debug.Log($"2: {landmark.ToString()}");
                 }
 
-                /*
+                
                 var outputTexture = new Texture2D(_width, _height, TextureFormat.RGBA32, false);
                 var outputPixelData = new Color32[_width * _height];
                 _screen.texture = outputTexture;
@@ -91,20 +98,8 @@ namespace Mediapipe.Unity.Tutorial
                         outputTexture.Apply();
                     }
                 }
-                
-
-                if (multiFaceLandmarkStream.TryGetNext(out var multiFaceLandmarks))
-                {
-                    if (multiFaceLandmarks != null && multiFaceLandmarks.Count > 0)
-                    {
-                        foreach(var landmarks in multiFaceLandmarks)
-                        {
-                            var topOfHead = landmarks.Landmark[10];
-                            Debug.Log($"Coordinates: {topOfHead.ToString()}");
-                        }
-                    }
-                }
-                */
+            
+               
             }
 
         }
