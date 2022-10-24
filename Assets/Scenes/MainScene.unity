@@ -220,7 +220,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9bd4c71cd6485eb4b96f8e415dd5a2bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _configAsset: {fileID: 4900000, guid: f3f0ff34f8f75904aba2991c21948a51, type: 3}
+  _configAsset: {fileID: 4900000, guid: 17e5c4ad5fda4f64f9a3ae1f66a28e1c, type: 3}
   _screen: {fileID: 1176025581}
   _width: 640
   _height: 480
