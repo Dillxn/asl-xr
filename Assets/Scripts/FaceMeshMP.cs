@@ -51,11 +51,12 @@ namespace Mediapipe.Unity.Tutorial
             var stopwatch = new Stopwatch();
 
             _graph = new CalculatorGraph(_configAsset.text);
-            var outputVideoStream = new OutputStream<ImageFramePacket, ImageFrame>(_graph, "output_video");
+            var outputVideoStream = new OutputStream<ImageFramePacket, ImageFrame>(_graph, "transformed_input_video");
             outputVideoStream.StartPolling().AssertOk();
-            var multiFaceLandmarkStream = new OutputStream<NormalizedLandmarkListVectorPacket, List<NormalizedLandmarkList>>(_graph, "multi_face_landmarks");
-            multiFaceLandmarkStream.StartPolling().AssertOk();
             var faceLandmarksStream = new OutputStream<NormalizedLandmarkListPacket, NormalizedLandmarkList>(_graph, "face_landmarks");
+            faceLandmarksStream.StartPolling().AssertOk();
+            var poseLandmarksStream = new OutputStream<NormalizedLandmarkListPacket, NormalizedLandmarkList>(_graph, "pose_landmarks");
+            poseLandmarksStream.StartPolling().AssertOk();
             
             _graph.StartRun().AssertOk();
             stopwatch.Start();
@@ -70,36 +71,19 @@ namespace Mediapipe.Unity.Tutorial
                 _graph.AddPacketToInputStream("input_video", new ImageFramePacket(imageFrame, new Timestamp(currentTimestamp))).AssertOk();
 
                 yield return new WaitForEndOfFrame();
-
-                if (multiFaceLandmarkStream.TryGetNext(out var multiFaceLandmarks))
-                {
-                    _multiFaceLandmarksAnnotationController.DrawNow(multiFaceLandmarks);
-                    if (multiFaceLandmarks != null && multiFaceLandmarks.Count > 0)
-                    {
-                        foreach(var landmarks in multiFaceLandmarks)
-                        {
-                            var topOfHead = landmarks.Landmark[10];
-                            //Debug.Log($"Coordinates: {topOfHead.ToString()}");
-                        }
-                    }
-                }
-                else
-                {
-                    _multiFaceLandmarksAnnotationController.DrawNow(null);
-                }
                 
                 // new
-                /* if (faceLandmarkStream.TryGetNext(out var faceLandmarks))
+                if (faceLandmarksStream.TryGetNext(out var faceLandmarks))
                 {
-                    if (faceLandmarks != null && faceLandmarks.Count > 0)
-                    {
-                        foreach(var landmarks in faceLandmarks)
-                        {
-                            var topOfHead = landmarks.Landmark[10];
-                            Debug.Log($"Coordinates: {topOfHead.ToString()}");
-                        }
-                    }
-                } */
+                    var landmark = faceLandmarks.Landmark[10];
+                    Debug.Log($"1: {landmark.ToString()}");
+                }
+                
+                if (poseLandmarksStream.TryGetNext(out var poseLandmarks))
+                {
+                    var landmark = poseLandmarks.Landmark[0];
+                    Debug.Log($"2: {landmark.ToString()}");
+                }
 
                 
                 var outputTexture = new Texture2D(_width, _height, TextureFormat.RGBA32, false);
