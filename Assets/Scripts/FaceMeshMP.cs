@@ -15,6 +15,8 @@ namespace Mediapipe.Unity.Tutorial
         [SerializeField] private int _height;
         [SerializeField] private int _fps;
         [SerializeField] private MultiFaceLandmarkListAnnotationController _multiFaceLandmarksAnnotationController;
+        
+        [SerializeField] private GameObject _model;
 
         private CalculatorGraph _graph;
         private ResourceManager _resourceManager;
@@ -51,7 +53,7 @@ namespace Mediapipe.Unity.Tutorial
             var stopwatch = new Stopwatch();
 
             _graph = new CalculatorGraph(_configAsset.text);
-            var outputVideoStream = new OutputStream<ImageFramePacket, ImageFrame>(_graph, "transformed_input_video");
+            var outputVideoStream = new OutputStream<ImageFramePacket, ImageFrame>(_graph, "output_video");
             outputVideoStream.StartPolling().AssertOk();
             var faceLandmarksStream = new OutputStream<NormalizedLandmarkListPacket, NormalizedLandmarkList>(_graph, "face_landmarks");
             faceLandmarksStream.StartPolling().AssertOk();
@@ -76,13 +78,23 @@ namespace Mediapipe.Unity.Tutorial
                 if (faceLandmarksStream.TryGetNext(out var faceLandmarks))
                 {
                     var landmark = faceLandmarks.Landmark[10];
-                    Debug.Log($"1: {landmark.ToString()}");
+                    //Debug.Log($"1: {landmark.ToString()}");
                 }
                 
                 if (poseLandmarksStream.TryGetNext(out var poseLandmarks))
                 {
-                    var landmark = poseLandmarks.Landmark[0];
-                    Debug.Log($"2: {landmark.ToString()}");
+                    var landmark = poseLandmarks.Landmark[12];
+                    Debug.Log($"R Shoulder: {landmark.ToString()}");
+                    var landmark2 = poseLandmarks.Landmark[14];
+                    Debug.Log($"R Elbow: {landmark2.ToString()}");
+                    
+                    _model.transform.FindChild("root")
+                        .transform.FindChild("pelvis")
+                        .transform.FindChild("spine_01")
+                        .transform.FindChild("spine_02")
+                        .transform.FindChild("spine_03")
+                        .transform.FindChild("clavicle_r")
+                        .rotation = Quaternion.FromToRotation(Vector3.up, new Vector3(landmark.X - landmark2.X, landmark.Y - landmark2.Y, landmark.Z - landmark2.Z));
                 }
 
                 
