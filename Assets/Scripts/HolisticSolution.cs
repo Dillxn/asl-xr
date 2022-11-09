@@ -130,12 +130,6 @@ namespace Mediapipe.Unity.Holistic
 
     private void OnFaceLandmarksOutput(object stream, OutputEventArgs<NormalizedLandmarkList> eventArgs)
     {       
-      Debug.Log($"Async");
-      NormalizedLandmarkList faceLandmarks = new NormalizedLandmarkList();
-      faceLandmarks.MergeFrom(eventArgs.value);
-      NormalizedLandmark[] landmarks = new NormalizedLandmark[faceLandmarks.Landmark.Count];
-      faceLandmarks.Landmark.CopyTo(landmarks, 0);
-      Debug.Log($"{landmarks[400]}");
       _holisticAnnotationController.DrawFaceLandmarkListLater(eventArgs.value);
     }
 

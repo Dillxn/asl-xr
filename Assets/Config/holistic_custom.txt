@@ -20,6 +20,7 @@ input_stream: "input_video"
 # Output image with rendered results. (ImageFrame)
 output_stream: "output_video"
 output_stream: "transformed_input_video"
+output_stream: "segmentation_mask"
 
 # Collection of detected/processed faces, each represented as a list of
 # landmarks. (std::vector<NormalizedLandmarkList>)
