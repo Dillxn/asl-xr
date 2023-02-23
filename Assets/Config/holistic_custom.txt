@@ -1,3 +1,5 @@
+
+# The following file is modified by ASL XR Team, WKU
 # Copyright 2019 The MediaPipe Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# MediaPipe graph that performs face mesh with TensorFlow Lite on CPU.
+# MediaPipe graph that runs a holistic model
 
 # Input image. (ImageFrame)
 input_stream: "input_video"
@@ -34,17 +36,10 @@ output_stream: "pose_detection"
 output_stream: "face_landmarks"
 output_stream: "left_hand_landmarks"
 output_stream: "right_hand_landmarks"
+output_stream: "left_hand_world_landmarks"
+output_stream: "right_hand_world_landmarks"
 
-# Throttles the images flowing downstream for flow control. It passes through
-# the very first incoming image unaltered, and waits for downstream nodes
-# (calculators and subgraphs) in the graph to finish their tasks before it
-# passes through another image. All images that come in while waiting are
-# dropped, limiting the number of in-flight images in most part of the graph to
-# 1. This prevents the downstream nodes from queuing up incoming images and data
-# excessively, which leads to increased latency and memory usage, unwanted in
-# real-time mobile applications. It also eliminates unnecessarily computation,
-# e.g., the output produced by a node may get dropped downstream if the
-# subsequent nodes are still busy processing previous inputs.
+# Throttles the images flowing downstream for flow control. 
 node {
   calculator: "FlowLimiterCalculator"
   input_stream: "input_video"
@@ -69,7 +64,6 @@ node {
   }
 }
 
-
 node: {
   calculator: "ImageTransformationCalculator"
   input_stream: "IMAGE:throttled_input_video"
@@ -80,7 +74,6 @@ node: {
     }
   }
 }
-
 
 # Subgraph that detects faces and corresponding landmarks.
 node {
@@ -104,8 +97,6 @@ node {
   output_stream: "IMAGE:output_video"
 }
 
-
-
 node {
   calculator: "HolisticLandmarkCpu"
   input_stream: "IMAGE:transformed_input_video"
@@ -123,6 +114,34 @@ node {
   output_stream: "LEFT_HAND_LANDMARKS:left_hand_landmarks"
   output_stream: "RIGHT_HAND_LANDMARKS:right_hand_landmarks"
 }
+
+
+node {
+  calculator: "HandLandmarksLeftAndRightCpu"
+  input_stream: "IMAGE:transformed_input_video"
+  input_stream: "POSE_LANDMARKS:pose_landmarks"
+  output_stream: "LEFT_HAND_ROI_FROM_POSE:left_hand_roi_from_pose"
+  output_stream: "RIGHT_HAND_ROI_FROM_POSE:right_hand_roi_from_pose"
+}
+
+# left hand world landmarks
+node {
+  calculator: "HandLandmarkCpu"
+  input_stream: "IMAGE:transformed_input_video"
+  input_stream: "ROI:left_hand_roi_from_pose"
+  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+  output_stream: "WORLD_LANDMARKS:left_hand_world_landmarks"
+}
+
+# right hand world landmarks
+node {
+  calculator: "HandLandmarkCpu"
+  input_stream: "IMAGE:transformed_input_video"
+  input_stream: "ROI:right_hand_roi_from_pose"
+  input_side_packet: "MODEL_COMPLEXITY:model_complexity"
+  output_stream: "WORLD_LANDMARKS:right_hand_world_landmarks"
+}
+
 
 node: {
   calculator: "ImageTransformationCalculator"
